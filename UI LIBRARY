@@ -465,8 +465,9 @@ module = {}; do
 				})
 				return name
 			elseif idx == "creditme" then
-				local credit = module:createOBJ("TextLabel", main, {
-					BackgroundTransparency = 1
+				local credit = module:createOBJ("TextButton", main, {
+					AutoButtonColor = false
+					,BackgroundTransparency = 1
 					,Position = UDim2.new(0, 13, 1, -60)
 					,Size = UDim2.new(1, -13, 0, 50)
 					,Font = "GothamBold"
@@ -474,6 +475,15 @@ module = {}; do
 					,TextColor3 = Color3.fromRGB(132, 132, 132)
 					,TextSize = 16
 				})
+				credit.MouseButton1Click:Connect(function()
+					syn.write_clipboard(val)
+					credit.Text = "Copied!"
+					delay(0.3, function()
+						if credit.Text == "Copied!" then
+							credit.Text = val
+						end
+					end)
+				end)
 				return credit 
 			end
 			rawset(module, idx, val)
@@ -502,7 +512,7 @@ delay(1, function()
 				OptionsCloseMethod = method
 			end
 		)
-	end;module.creditme = "Made By A_003#8388"
+	end;module.creditme = "https://discord.gg/AUJ9S6s"
 	uis.InputBegan:Connect(function(_input, ignore)
 		if _input.UserInputType == Enum.UserInputType.Keyboard then
 			if OptionsCloseMethod == "KeyBind" and _input.KeyCode == Enum.KeyCode.F6 then
