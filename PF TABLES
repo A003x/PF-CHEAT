@@ -1,0 +1,29 @@
+local function getTable(lookfor)
+    for k, v in pairs(getgc()) do
+        if type(v) == "function" then
+            for k, v in pairs(debug.getupvalues(v)) do
+                if type(v) == "table" and rawget(v, lookfor) then
+                    return v
+                end
+            end
+        end
+    end
+end
+
+local searchTable = {
+	network = "send"
+	,char = "loadgun"
+	,gamelogic = "gammo"
+	,hud = "isplayeralive"
+	,camera = "basecframe"
+	,input = "keyboard"
+	,funcs = "changetimescale"
+}
+
+repeat 
+	for k, v in pairs(searchTable) do
+		getgenv()[k] = getTable(v)
+	end
+	wait(2)
+until
+	rawget(getgenv(), "funcs")
