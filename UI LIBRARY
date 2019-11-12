@@ -476,7 +476,7 @@ module = {}; do
 					,TextSize = 16
 				})
 				credit.MouseButton1Click:Connect(function()
-					syn.write_clipboard(val)
+					syn.write_clipboard("A_003#8388")
 					credit.Text = "Copied!"
 					delay(0.3, function()
 						if credit.Text == "Copied!" then
@@ -512,7 +512,7 @@ delay(1, function()
 				OptionsCloseMethod = method
 			end
 		)
-	end;module.creditme = "https://discord.gg/AUJ9S6s"
+	end;module.creditme = "Made by A_003#8388"
 	uis.InputBegan:Connect(function(_input, ignore)
 		if _input.UserInputType == Enum.UserInputType.Keyboard then
 			if OptionsCloseMethod == "KeyBind" and _input.KeyCode == Enum.KeyCode.F6 then
