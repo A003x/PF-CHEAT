@@ -118,18 +118,29 @@ local effect = {}; do
 	end
 end
 
+local function positionToColor(position)
+	local x, y = position.X.Offset + 21/2, position.Y.Offset + 21/2
+	local h = 1 - ((360/150 * x) / 360)
+	local s = 1 - ((255/149 * y) / 255)
+
+	return Color3.fromHSV(h, s, 1)
+end
+
 local gui = Instance.new("ScreenGui")
 gui.Parent = run:IsStudio() and player.PlayerGui or game.CoreGui
 local main;
 
 module = {}; do
+	local havecolorpickeropen = false;
+	
 	module.gui = gui
 	module.open1 = false
 	module.categorycount = 0
 	module.offsets = {
-		picker = 44
+		picker = 53
 		,slider = 30
 		,toggle = 30
+		,colorpicker = 30
 	}
 	module.pickerPositions = {
 		UDim2.new(0, 13, 1, 0)
@@ -431,6 +442,160 @@ module = {}; do
 			
 			updateWindow()
 		end
+	
+		function category:createColorPicker(name, tags, func)
+			local color = tags.default
+			local open = false
+			local colorpickerLabel = module:createOBJ("TextLabel", windowFrame, {
+				BackgroundTransparency = 1
+				,Name = name
+				,Position = UDim2.fromOffset(46, 4 + offset)
+				,Font = "SourceSansBold"
+				,Text = tags.text or name
+				,TextColor3 = Color3.fromRGB(255, 255, 255)
+				,TextSize = 14
+				,TextXAlignment = "Left"
+			});offset = offset + module.offsets.colorpicker
+			colorpickerLabel.Size = UDim2.fromOffset(colorpickerLabel.TextBounds.X + 3, 30)
+			if tags.info then
+				info.new(colorpickerLabel, tags.info)
+			end
+			local colorDisplay = module:createOBJ("ImageButton", colorpickerLabel, {
+				BackgroundTransparency = 1
+				,Image = "http://www.roblox.com/asset/?id=742285041"
+				,ImageColor3 = color
+				,Position = UDim2.fromOffset(-32.5, 8)
+				,Size = UDim2.fromOffset(18, 18)
+			})
+			local colorPickerWindow = module:createOBJ("TextLabel", window, {
+				BackgroundColor3 = Color3.fromRGB(33, 33, 33)
+				,BorderSizePixel = 0
+				,ClipsDescendants = true
+				,Position = UDim2.fromOffset(324, 0)
+				,Size = UDim2.fromOffset(0, 19)
+				,Font = "GothamBold"
+				,Text = "  " .. tags.text
+				,TextColor3 = Color3.fromRGB(152, 152, 152)
+				,TextSize = 14
+				,TextXAlignment = "Left"
+			})
+			local colorPickerWindow2 = module:createOBJ("Frame", colorPickerWindow, {
+				BackgroundColor3 = Color3.fromRGB(57, 57, 57)
+				,BorderSizePixel = 0
+				,ClipsDescendants = true
+				,Position = UDim2.new(0, 0, 1, 0)
+				,Size = UDim2.new(1, 0, 0, 0)
+			})
+			local colorPicker = module:createOBJ("ImageButton", colorPickerWindow2, {
+				BackgroundTransparency = 1
+				,ClipsDescendants = true
+				,Position = UDim2.new(0, 3, 0, 3)
+				,Size = UDim2.new(0, 150, 0, 149)
+				,Image = "http://www.roblox.com/asset/?id=328298876"
+			})
+			local colorPickerClose = module:createOBJ("TextButton", colorPickerWindow, {
+				AutoButtonColor = false
+				,BackgroundColor3 = Color3.fromRGB(33, 33, 33)
+				,BackgroundTransparency = 0.7
+				,BorderSizePixel = 0
+				,Position = UDim2.new(1, -19, 0, 0)
+				,Size = UDim2.fromOffset(19, 19)
+				,Font = "GothamBlack"
+				,Text = "×"
+				,TextColor3 = Color3.fromRGB(107, 107, 107)
+				,TextSize = 14
+			})
+			local colorPickerCrosshair = module:createOBJ("ImageLabel", colorPicker, {
+				BackgroundTransparency = 1
+				,Position = UDim2.new(0, -(21 / 2), 0, -(21 / 2))
+				,Size = UDim2.new(0, 21, 0, 21)
+				,Image = "http://www.roblox.com/asset/?id=316279304"
+			})
+			
+			colorPicker.MouseButton1Down:Connect(function()
+				local info = module:createInfoTab("")
+				spawn(function()
+					repeat
+						local mouseposition = Vector2.new(mouse.X, mouse.Y) -- uis:GetMouseLocation()
+						local rel = mouseposition - colorPicker.AbsolutePosition
+						
+						rel = Vector2.new(rel.X -(21 / 2), rel.Y -(21 / 2))
+						
+						local relX = math.clamp(rel.X, -(21 / 2), 150 - (21 / 2))
+						local relY = math.clamp(rel.Y, -(21 / 2), 149 - (21 / 2))
+						
+						rel = UDim2.fromOffset(relX, relY)
+						colorPickerCrosshair.Position = rel
+						info.Text = ("R: " .. tostring(color.r * 255):sub(1, 3) .. "; G: " .. tostring(color.g * 255):sub(1, 3) .. "; B: " .. tostring(color.b * 255):sub(1, 3))
+						info.Size = UDim2.new(0, info.TextBounds.X + 2, 0, info.AbsoluteSize.Y)
+						info.Position = UDim2.fromOffset(mouseposition.X + 15, mouseposition.Y)
+						info.Visible = true
+						color = positionToColor(rel)
+						colorDisplay.ImageColor3 = color
+						
+						if func then
+							func(color)
+						end
+						run.RenderStepped:Wait()
+					until
+						not input.isKeyDown("mouse1")
+					info:remove()
+				end)
+			end)
+			
+			if color ~= nil and func then
+				func(color)
+			end
+			
+			local function toggleopen()
+				open = not open
+				if open then
+					if havecolorpickeropen then
+						open = false
+						return print'triedtoopen'
+					end
+					havecolorpickeropen = true
+					spawn(function()
+						colorPickerWindow:TweenSize(UDim2.new(0, 156, 0, 19), "Out", "Linear", 0.1, true)
+						wait(0.1)
+						if open then
+							colorPickerWindow.ClipsDescendants = false
+							colorPickerWindow2:TweenSize(UDim2.new(1, 0, 0, 155), "Out", "Linear", 0.1, true)
+						end
+					end)
+				else
+					spawn(function()
+						colorPickerWindow2:TweenSize(UDim2.new(1, 0, 0, 0), "In", "Linear", 0.1, true)
+						wait(0.1)
+						if not open then
+							colorPickerWindow.ClipsDescendants = true
+							colorPickerWindow:TweenSize(UDim2.new(0, 0, 0, 19), "In", "Linear", 0.1, true)
+							havecolorpickeropen = false
+						end
+					end)
+				end
+			end
+			
+			colorDisplay.MouseButton1Click:Connect(function()
+				toggleopen()
+			end)
+			
+			colorPickerClose.MouseEnter:Connect(function()
+				effect.new("fade", colorPickerClose, Color3.fromRGB(255, 0, 0), 0.2)
+			end)
+			
+			colorPickerClose.MouseLeave:Connect(function()
+				effect.new("fade", colorPickerClose, Color3.fromRGB(33, 33, 33), 0.2)
+			end)
+			
+			colorPickerClose.MouseButton1Click:Connect(function()
+				if open then
+					toggleopen()
+				end
+			end)
+			
+			updateWindow()
+		end
 		
 		closeWindow.MouseEnter:Connect(function()
 			effect.new("fade", closeWindow, Color3.fromRGB(255, 0, 0), 0.2)
@@ -476,7 +641,7 @@ module = {}; do
 					,TextSize = 16
 				})
 				credit.MouseButton1Click:Connect(function()
-					syn.write_clipboard("A_003#8388")
+					syn.write_clipboard("https://discord.gg/AUJ9S6s")
 					credit.Text = "Copied!"
 					delay(0.3, function()
 						if credit.Text == "Copied!" then
@@ -504,15 +669,15 @@ local accent = module:createOBJ("Frame", main, {
 	,Size = UDim2.new(0, 23, 1, 0)
 })
 
-delay(1, function()
-	local Options = module:createCategory("Options", {}); do
+delay(0.5, function()
+	getgenv().Options = module:createCategory("Options", {}); do
 		local closeType = Options:createPicker("GUI Opening Method", 
 			{text="GUI Opening Method";info="Changes the style in which the GUI is opened/closed.";returnArguments={"Linear","Segmented","KeyBind"};default="Linear (Mouse)"},{"Linear (Mouse)","Segmented (Mouse)","KeyBind (F6)"},
 			function(method)
 				OptionsCloseMethod = method
 			end
 		)
-	end;module.creditme = "Made by A_003#8388"
+	end;module.creditme = "Join our discord! discord.gg/AUJ9S6s\n(click to copy)"
 	uis.InputBegan:Connect(function(_input, ignore)
 		if _input.UserInputType == Enum.UserInputType.Keyboard then
 			if OptionsCloseMethod == "KeyBind" and _input.KeyCode == Enum.KeyCode.F6 then
