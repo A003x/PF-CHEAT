@@ -1,7 +1,5 @@
 --just my ui lib. if u want to use it go ahead lol. i dont feel like adding documentation so just figure it out.
 
---just my ui lib. if u want to use it go ahead lol. i dont feel like adding documentation so just figure it out.
-
 local game = setmetatable({}, {
 	__index = function(self, idx, ...)
 		return game:FindService(idx) or game[idx] or "Error . . ." 
